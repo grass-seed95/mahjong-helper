@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">麻将助手</string>
+    <string name="start_capture">开始监控</string>
+    <string name="stop_capture">停止监控</string>
+</resources>
