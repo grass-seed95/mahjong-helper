@@ -24,5 +24,8 @@
             android:name=".capture.CaptureService"
             android:foregroundServiceType="mediaProjection"
             android:exported="false" />
+        <service
+            android:name=".overlay.FloatingOverlayService"
+            android:exported="false" />
     </application>
 </manifest>
