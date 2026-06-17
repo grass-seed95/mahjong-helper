@@ -3,6 +3,7 @@ package com.mahjong.helper.ui.input
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -12,6 +13,7 @@ import com.mahjong.helper.engine.model.Hand
 import com.mahjong.helper.engine.model.Suit
 import com.mahjong.helper.engine.model.Tile
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ManualInputScreen(
     viewModel: ManualInputViewModel = viewModel(),
