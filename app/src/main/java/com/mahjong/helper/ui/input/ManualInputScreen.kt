@@ -18,6 +18,8 @@ import com.mahjong.helper.engine.model.Hand
 import com.mahjong.helper.engine.model.Suit
 import com.mahjong.helper.engine.model.Tile
 import com.mahjong.helper.engine.DiscardRecommendation
+import com.mahjong.helper.engine.OpponentAnalysis
+import com.mahjong.helper.engine.TableAnalysis
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -169,6 +171,12 @@ private fun AnalysisResultSection(state: InputUiState) {
             }
         }
     }
+
+    // Table analysis
+    state.tableAnalysis?.let { analysis ->
+        Spacer(Modifier.height(16.dp))
+        TableAnalysisCard(analysis)
+    }
 }
 
 @Composable
@@ -176,5 +184,94 @@ private fun StatItem(label: String, value: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(value, style = MaterialTheme.typography.titleMedium)
         Text(label, style = MaterialTheme.typography.labelSmall)
+    }
+}
+
+@Composable
+private fun TableAnalysisCard(analysis: TableAnalysis) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+        )
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text("局面分析", style = MaterialTheme.typography.titleSmall)
+            Spacer(Modifier.height(4.dp))
+            Text(analysis.summary, style = MaterialTheme.typography.bodySmall)
+            Spacer(Modifier.height(4.dp))
+
+            val riskColor = when {
+                analysis.overallRisk.contains("高危") -> androidx.compose.ui.graphics.Color(0xFFEF4444)
+                analysis.overallRisk.contains("中等") -> androidx.compose.ui.graphics.Color(0xFFF59E0B)
+                else -> androidx.compose.ui.graphics.Color(0xFF22C55E)
+            }
+            Text(analysis.overallRisk, style = MaterialTheme.typography.labelMedium, color = riskColor)
+
+            // Opponent list
+            analysis.opponents.forEach { opponent ->
+                Spacer(Modifier.height(8.dp))
+                OpponentCard(opponent)
+            }
+        }
+    }
+}
+
+@Composable
+private fun OpponentCard(opponent: OpponentAnalysis) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "对家${opponent.playerIndex + 1}",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "${opponent.discardsCount}张弃牌",
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                    val probColor = when {
+                        opponent.tenpaiProbability > 0.5f -> androidx.compose.ui.graphics.Color(0xFFEF4444)
+                        opponent.tenpaiProbability > 0.2f -> androidx.compose.ui.graphics.Color(0xFFF59E0B)
+                        else -> androidx.compose.ui.graphics.Color(0xFF22C55E)
+                    }
+                    Text(
+                        "听牌${(opponent.tenpaiProbability * 100).toInt()}%",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = probColor
+                    )
+                }
+            }
+            Spacer(Modifier.height(4.dp))
+            Text(opponent.estimatedDirection, style = MaterialTheme.typography.bodySmall)
+
+            // Danger signals
+            opponent.dangerSignals.forEach { signal ->
+                Text(
+                    "⚠ $signal",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = androidx.compose.ui.graphics.Color(0xFFEF4444)
+                )
+            }
+
+            // Dangerous tiles
+            if (opponent.dangerousTiles.isNotEmpty()) {
+                Text(
+                    "高危牌: ${opponent.dangerousTiles.joinToString(" ")}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = androidx.compose.ui.graphics.Color(0xFFF59E0B)
+                )
+            }
+        }
     }
 }

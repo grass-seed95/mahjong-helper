@@ -10,6 +10,8 @@ import com.mahjong.helper.data.entity.RoundEntity
 import com.mahjong.helper.engine.DiscardAdvisor
 import com.mahjong.helper.engine.DiscardRecommendation
 import com.mahjong.helper.engine.ShantenCalculator
+import com.mahjong.helper.engine.OpponentAnalyzer
+import com.mahjong.helper.engine.TableAnalysis
 import com.mahjong.helper.engine.model.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,6 +25,7 @@ data class InputUiState(
     val recommendations: List<DiscardRecommendation> = emptyList(),
     val bestDiscard: DiscardRecommendation? = null,
     val shanten: Int = -1,
+    val tableAnalysis: TableAnalysis? = null,
     val error: String? = null,
     val analyzed: Boolean = false
 )
@@ -34,6 +37,7 @@ class ManualInputViewModel(application: Application) : AndroidViewModel(applicat
     private val dao: GameRecordDao
     private val advisor = DiscardAdvisor()
     private val shantenCalc = ShantenCalculator()
+    private val opponentAnalyzer = OpponentAnalyzer()
 
     private var currentGameId: Long? = null
     private var roundNumber = 0
@@ -66,6 +70,7 @@ class ManualInputViewModel(application: Application) : AndroidViewModel(applicat
         val shanten = shantenCalc.shanten(hand)
         val recommendations = advisor.recommend(hand, gameState)
         val best = advisor.bestDiscard(recommendations)
+        val tableAnalysis = opponentAnalyzer.analyzeTable(gameState)
 
         _state.update {
             it.copy(
@@ -73,6 +78,7 @@ class ManualInputViewModel(application: Application) : AndroidViewModel(applicat
                 recommendations = recommendations,
                 bestDiscard = best,
                 shanten = shanten,
+                tableAnalysis = tableAnalysis,
                 error = null,
                 analyzed = true
             )

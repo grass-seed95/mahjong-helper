@@ -19,14 +19,16 @@ data class ScreenConfig(
 
 class VisionRecognizer(
     private val config: ScreenConfig,
-    private val templates: Map<String, Bitmap>   // "1m" → tile template image
+    private val templates: Map<String, Bitmap> = emptyMap()  // "1m" → tile template image
 ) {
+    private val colorRecognizer = ColorBasedRecognizer()
+
     /**
      * Analyze a screenshot and extract the game state.
      * Returns null if recognition confidence is too low.
      */
     fun recognize(screenshot: Bitmap): GameState? {
-        // Crop each region and run template matching
+        // Crop each region and run recognition
         val myHandTiles = recognizeRegion(screenshot, config.myHandRect)
         if (myHandTiles.size < 10) return null
 
@@ -56,15 +58,24 @@ class VisionRecognizer(
     private fun recognizeRegion(screenshot: Bitmap, region: Rect): List<Tile> {
         val cropped = Bitmap.createBitmap(screenshot, region.left, region.top,
             region.width(), region.height())
-        val results = mutableListOf<Pair<Float, Tile>>()
 
-        for ((tileId, template) in templates) {
-            val confidence = templateMatch(cropped, template)
-            if (confidence > 0.7) {
-                Tile.parse(tileId)?.let { results.add(confidence to it) }
+        // If we have templates, use template matching
+        if (templates.isNotEmpty()) {
+            val results = mutableListOf<Pair<Float, Tile>>()
+            for ((tileId, template) in templates) {
+                val confidence = templateMatch(cropped, template)
+                if (confidence > 0.7) {
+                    Tile.parse(tileId)?.let { results.add(confidence to it) }
+                }
             }
+            return results.sortedByDescending { it.first }.map { it.second }
         }
-        return results.sortedByDescending { it.first }.map { it.second }
+
+        // Fallback: color-based recognition
+        // Estimate tile count from region width (assume ~45px per tile)
+        val estimatedTileCount = cropped.width / 45
+        val matches = colorRecognizer.recognizeTileRow(cropped, estimatedTileCount.coerceIn(1, 14))
+        return matches.filter { it.confidence > 0.3 }.map { it.tile }
     }
 
     /**
