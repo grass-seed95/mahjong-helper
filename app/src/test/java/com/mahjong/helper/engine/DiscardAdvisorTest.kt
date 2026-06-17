@@ -12,7 +12,7 @@ class DiscardAdvisorTest {
         val hand = Hand.fromString("1m,2m,3m,4m,5m,6p,7p,8p,2s,2s,9p,1s,3s,5p")
         val state = GameState(hand)
         val result = advisor.recommend(hand, state)
-        assertEquals(hand.freeTiles.toSet().size, result.size)
+        assertEquals(hand.freeTiles.size, result.size)
     }
 
     @Test
